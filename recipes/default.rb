@@ -8,7 +8,7 @@ template node[:mongodb][:conf_file] do
   owner "root"
   group "root"
   variables(
-    :replset_name => node[:mongodb][:replset_name]
+    :replset_name => node[:mongodb][:replset][:name]
   )
   notifies :restart, "service[mongodb]", :immediately
 end

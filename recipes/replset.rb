@@ -9,10 +9,12 @@ include_recipe "mongodb::default"
 # default[:mongodb][:replset][:initial_nodes]    = 3
 ruby_block "mongodb-search" do
   block do
+    Chef::Log.info "Mongodb Replset Name: #{node[:mongodb][:replset][:name]}"
     mongodb_nodes = search(:node, "mongodb_replset_name:#{node[:mongodb][:replset][:name]}")
 
     node.set[:mongodb][:replset][:nodes] = mongodb_nodes.map do |n|
-      { :name => n.name, :private_ip => n[:cloud][:private_ipv4] }
+      # Chef::Log.info "MongoDB Node Found: #{n.name}, Private IP: #{n[:cloud][:local_ipv4]}"
+      { :name => n.name, :private_ip => n[:cloud][:local_ipv4] }
     end
 
     replset = MongoHelper::ReplSet.new(self)
@@ -20,11 +22,11 @@ ruby_block "mongodb-search" do
     if ! replset.master_ip.nil?
       Chef::Log.info "A master replica set node was found.  We should be good to go to add to the replica set."
       node.set[:mongodb][:initiate_replset] = true
-    elsif mongodb_nodes.length == node[:mongodb][:replset][:number_of_nodes]
+    elsif mongodb_nodes.length == node[:mongodb][:replset][:initial_nodes]
       Chef::Log.info "All MongoDB nodes are up.  Setting the flag to initialize the replica set."
       node.set[:mongodb][:initiate_replset] = true
     else
-      Chef::Log.info "Still waiting on the rest of the mongodb nodes to be spun up to begin replica setup."
+      Chef::Log.info "Still waiting on the rest of the mongodb nodes to be spun up to configure the replset."
       node.set[:mongodb][:initiate_replset] = false
     end
 
@@ -43,13 +45,13 @@ end
 #   {:name => 'mongo1', :private_ip => 'x.x.x.x'},
 #   {:name => 'mongo2', :private_ip => 'x.x.x.x'}
 # ]
-ruby_block "setup-replication" do
+ruby_block "establish-replset" do
   block do
     if node[:mongodb][:initiate_replset]
       replset = MongoHelper::ReplSet.new(self)
 
-      Chef::Log.info "Detected private ips: [#{replset.private_ips.join(', ')}]"
-      Chef::Log.info "Planned primary: #{replset.planned_primary.to_json}"
+      # Chef::Log.info "Detected private ips: [#{replset.private_ips.join(', ')}]"
+      # Chef::Log.info "Planned primary: #{replset.planned_primary.to_json}"
 
       if node.name == replset.planned_primary[:name] && !replset.initialized?
         Chef::Log.info "Replset is not initialized, initializing..."
@@ -76,7 +78,7 @@ ruby_block "setup-replication" do
         replset.add_node(node)
       end
     else
-      Chef::Log.info "Ronco has not given the go ahead yet.  Waiting until the next run."
+      Chef::Log.info "The replset doesn't appear to be ready yet.  Waiting until the next run."
     end
   end
 end
