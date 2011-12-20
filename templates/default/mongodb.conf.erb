@@ -1,0 +1,47 @@
+# mongodb.conf
+# http://www.mongodb.org/display/DOCS/File+Based+Configuration
+
+# Where to store the data.
+
+# Note: if you run mongodb as a non-root user (recommended) you may
+# need to create and set permissions for this directory manually,
+# e.g., if the parent directory isn't mutable by the mongodb user.
+dbpath = /var/lib/mongodb
+
+# Where to log
+logpath = /var/log/mongodb/mongodb.log
+
+# Whether the log file will be appended (true) or over-written (false)
+logappend = true
+
+# In replica set configuration, specify the name of the replica set
+<% unless @replset_name.nil? %>
+replSet = <%= @replset_name %>
+<% end %>
+
+# Turn on simple rest API 
+rest = true
+
+# Enables periodic logging of CPU utilization and I/O wait
+cpu = true
+
+# Turn on/off security.  Off is currently the default
+# noauth = true
+# auth = true
+
+# Verbose logging output (same as v = true) 
+<% if node[:mongodb][:verbose] %>
+verbose = true
+<% end %>
+
+# Quiet logging output (same as v = true) 
+<% if node[:mongodb][:quiet] %>
+quiet = true 
+<% end %>
+
+# Whether writes will be journaled or not. This feature enables fast recovery
+# from crashes
+<% if node[:mongodb][:journal] %>
+journal = true
+<% end %>
+
