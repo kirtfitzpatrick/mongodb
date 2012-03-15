@@ -11,7 +11,7 @@ module MongoHelper
     end
 
     def planned_primary
-      @recipe.node[:mongodb][:replset][:nodes].sort_by {|a| a[:name]}.first
+      @recipe.node[:mongodb][:replset][:nodes].sort_by {|a| a[:node_name]}.first
     end
 
     def private_ips
@@ -22,7 +22,7 @@ module MongoHelper
 
     def private_ip(node)
       matching_replset_node = @recipe.node[:mongodb][:replset][:nodes].find do |replset_node|
-        node.name == replset_node[:name]
+        node.name == replset_node[:node_name]
       end
 
       return matching_replset_node[:private_ip]
@@ -59,11 +59,11 @@ module MongoHelper
     end
 
     def initiate(node)
-      Chef::Log.info "echo 'rs.initiate({ _id: \"%s\", members : [ { _id : 0, host : \"%s\"} ] })' | mongo local" % [ node[:mongodb][:replset][:name], private_ip(node) ]
+      Chef::Log.info "echo 'rs.initiate({ _id: \"%s\", members : [ { _id : 0, host : \"%s\"} ] })' | mongo local" % [ node[:mongodb][:replset][:node_name], private_ip(node) ]
       
       shell_out(
         "echo 'rs.initiate({ _id: \"%s\", members : [ { _id : 0, host : \"%s\"} ] })' | mongo local" %
-            [ node[:mongodb][:replset][:name], private_ip(node) ]
+            [ node[:mongodb][:replset][:node_name], private_ip(node) ]
       )
     end
 
