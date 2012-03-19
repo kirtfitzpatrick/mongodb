@@ -1,7 +1,4 @@
-
-
 include_recipe "mongodb::default"
-
 
 # Expected Attributes:
 #
@@ -11,15 +8,15 @@ if node[:mongodb][:ip_address].nil? && !node[:cloud].nil?
   node.set[:mongodb][:ip_address] = node[:cloud][:local_ipv4]
 end
 
-
 ruby_block "mongodb-search" do
   block do
     Chef::Log.info "Mongodb Replset Name: #{node[:mongodb][:replset][:name]}"
     mongodb_nodes = search(:node, "mongodb_replset_name:#{node[:mongodb][:replset][:name]}")
+    Chef::Log.info "Found #{mongodb_nodes.size} nodes"
 
     node.set[:mongodb][:replset][:nodes] = mongodb_nodes.inject([]) do |memo, n|
-      unless n[:mongodb][:ipaddress].nil?
-        memo << { :node_name => n.name, :private_ip => n[:mongodb][:ipaddress] }
+      unless n[:mongodb][:ip_address].nil?
+        memo << { :node_name => n.name, :private_ip => n[:mongodb][:ip_address] }
       end
     end
 
@@ -39,8 +36,6 @@ ruby_block "mongodb-search" do
     node.save
   end
 end
-
-
 
 # Expected Attributes:
 # 
@@ -89,5 +84,3 @@ ruby_block "establish-replset" do
     end
   end
 end
-
-
