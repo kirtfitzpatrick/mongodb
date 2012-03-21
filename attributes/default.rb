@@ -3,7 +3,6 @@ default[:mongodb][:port]      = 27017
 default[:mongodb][:verbose]   = false
 default[:mongodb][:journal]   = true
 
-
 # Change initial_nodes to the number of nodes you plan to spin up in 
 # parallel so the don't all try to make themselves the master simultaneously
 default[:mongodb][:replset][:initial_nodes]    = 1 
@@ -20,3 +19,4 @@ default[:mongodb][:replset][:arbiter]          = false
 default[:mongodb][:replset][:initiate_replset] = false
 default[:mongodb][:replset][:nodes]            = []
 
+default[:mongodb][:install_pymongo] = true
