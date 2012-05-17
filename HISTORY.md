@@ -1,3 +1,7 @@
+## 1.1.2
+
+* fixed internal ip search
+
 ## 1.1.1
 
 * Add pymongo

@@ -59,12 +59,13 @@ module MongoHelper
     end
 
     def initiate(node)
+      Chef::Log.info node[:mongodb][:replset]['name']
       Chef::Log.info node[:mongodb][:replset][:node_name]
-      Chef::Log.info "echo 'rs.initiate({ _id: \"%s\", members : [ { _id : 0, host : \"%s\"} ] })' | mongo local" % [ node[:mongodb][:replset][:node_name], private_ip(node) ]
+      Chef::Log.info "echo 'rs.initiate({ _id: \"%s\", members : [ { _id : 0, host : \"%s\"} ] })' | mongo local" % [ node[:mongodb][:replset]['name'], private_ip(node) ]
       
       shell_out(
         "echo 'rs.initiate({ _id: \"%s\", members : [ { _id : 0, host : \"%s\"} ] })' | mongo local" %
-            [ node[:mongodb][:replset][:node_name], private_ip(node) ]
+            [ node[:mongodb][:replset]['name'], private_ip(node) ]
       )
     end
 
