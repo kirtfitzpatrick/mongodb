@@ -4,8 +4,15 @@ include_recipe "mongodb::default"
 #
 # default[:mongodb][:replset][:name]             = 'default'
 # default[:mongodb][:replset][:initial_nodes]    = 3
-if node[:mongodb][:ip_address].nil? && !node[:cloud].nil?
-  node.set[:mongodb][:ip_address] = node[:cloud][:local_ipv4]
+
+network    = node['network']
+interfaces = network['interfaces']
+iface      = interfaces['eth1']
+addresses  = iface['addresses']
+internal_ip = addresses.keys.select { |key| addresses[key]['family'] == 'inet' }.first
+
+if node[:mongodb][:ip_address].nil? && internal_ip
+  node.set[:mongodb][:ip_address] = internal_ip
 end
 
 ruby_block "mongodb-search" do
@@ -15,9 +22,14 @@ ruby_block "mongodb-search" do
     Chef::Log.info "Found #{mongodb_nodes.size} nodes"
 
     node.set[:mongodb][:replset][:nodes] = mongodb_nodes.inject([]) do |memo, n|
-      unless n[:mongodb][:ip_address].nil?
+      if n[:mongodb][:ip_address].nil?
+        Chef::Log.warn 'node internal ip is nil'
+      else
+        Chef::Log.info "memo node name is #{n.name}"
         memo << { :node_name => n.name, :private_ip => n[:mongodb][:ip_address] }
+        Chef::Log.info memo
       end
+      memo
     end
 
     replset = MongoHelper::ReplSet.new(self)
@@ -52,12 +64,13 @@ ruby_block "establish-replset" do
       replset = MongoHelper::ReplSet.new(self)
       next if replset.planned_primary.nil?
 
-      # Chef::Log.info "Detected private ips: [#{replset.private_ips.join(', ')}]"
-      # Chef::Log.info "Planned primary: #{replset.planned_primary.to_json}"
+      Chef::Log.info "Detected private ips: [#{replset.private_ips.join(', ')}]"
+      Chef::Log.info "Planned primary: #{replset.planned_primary.to_json}"
 
       if node.name == replset.planned_primary[:node_name] && !replset.initialized?
         Chef::Log.info "Replset is not initialized, initializing..."
 
+        Chef::Log.info "initializing node #{node}"
         replset.initiate(node)
 
         if replset.initialized?
