@@ -1,6 +1,6 @@
 maintainer        "AKQA SF Ops"
 maintainer_email  "sf.ops@akqa.com"
-license           "'open' like android"
+license          "Apache 2.0"
 description       "Installs MongoDB and builds the ReplicaSet"
 version           "1.1.2"
 
