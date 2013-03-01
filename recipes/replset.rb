@@ -23,20 +23,24 @@ include_recipe "mongodb::default"
 # default[:mongodb][:replset][:name]             = 'default'
 # default[:mongodb][:replset][:initial_nodes]    = 3
 
-network     = node['network']
-interfaces  = network['interfaces']
-iface       = interfaces['eth1']
-addresses   = iface['addresses']
-internal_ip = addresses.keys.select { |key| addresses[key]['family'] == 'inet' }.first
+# network     = node['network']
+# interfaces  = network['interfaces']
+# iface       = interfaces['eth1']
+# addresses   = iface['addresses']
+# internal_ip = addresses.keys.select { |key| addresses[key]['family'] == 'inet' }.first
+# 
+# if node[:mongodb][:ip_address].nil? && internal_ip
+#   node.set[:mongodb][:ip_address] = internal_ip
+# end
 
-if node[:mongodb][:ip_address].nil? && internal_ip
-  node.set[:mongodb][:ip_address] = internal_ip
-end
+node.set[:mongodb][:ip_address] = node['fqdn']
 
 ruby_block "mongodb-search" do
   block do
     Chef::Log.info "Mongodb Replset Name: #{node[:mongodb][:replset][:name]}"
-    mongodb_nodes = search(:node, "mongodb_replset_name:#{node[:mongodb][:replset][:name]}")
+    mongodb_nodes = search(:node, "chef_environment:#{node.chef_environment} AND \
+    mongodb_replset_name:#{node[:mongodb][:replset][:name]} AND \
+    recipes:mongodb\\:\\:replset")
     Chef::Log.info "Found #{mongodb_nodes.size} nodes"
 
     node.set[:mongodb][:replset][:nodes] = mongodb_nodes.inject([]) do |memo, n|
